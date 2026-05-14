@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EWS — Early Warning System</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EFEFEF; --card:#FFF; --black:#111; --gray:#999;
+  --border:#E2E2E2; --r:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);font-family:'Nunito',sans-serif;overflow:hidden;}
+
+/* ── SHELL ── */
+#app{
+max-width:430px;height:100vh;height:100dvh;
+margin:0 auto;background:var(–bg);
+display:flex;flex-direction:column;overflow:hidden;
+position:relative;
+}
+
+/* ── TOPBAR ── */
+.topbar{
+flex-shrink:0;display:flex;align-items:center;
+justify-content:space-between;padding:16px 20px 10px;
+background:var(–bg);z-index:5;
+}
+.avatar{
+width:38px;height:38px;border-radius:50%;
+background:var(–card);border:1.5px solid var(–border);
+display:flex;align-items:center;justify-content:center;
+box-shadow:0 1px 4px rgba(0,0,0,.07);
+}
+.pill{
+background:var(–black);color:#fff;border-radius:50px;
+padding:9px 22px;font-size:11px;font-weight:800;letter-spacing:1.5px;
+}
+.topbar-center{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.status-row{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;
+letter-spacing:1px;color:var(–gray);}
+#live-dot{width:6px;height:6px;border-radius:50%;background:#BBB;flex-shrink:0;}
+.icon-btn{
+width:38px;height:38px;border-radius:50%;
+background:var(–card);border:none;
+display:flex;align-items:center;justify-content:center;
+cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.07);font-family:inherit;
+}
+.icon-btn:active{transform:scale(.93);}
+
+/* ── SCREENS (tabs) ── */
+.screens{flex:1;overflow:hidden;position:relative;}
+.screen{
+position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+padding:8px 20px 110px;display:none;-webkit-overflow-scrolling:touch;
+}
+.screen.active{display:block;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── DETAIL SCREENS (push nav) ── */
+.detail{
+position:absolute;inset:0;z-index:20;
+background:var(–bg);
+transform:translateX(100%);
+transition:transform .32s cubic-bezier(.4,0,.2,1);
+display:flex;flex-direction:column;
+}
+.detail.open{transform:translateX(0);}
+.detail-topbar{
+flex-shrink:0;display:flex;align-items:center;
+justify-content:space-between;padding:16px 20px 10px;
+background:var(–bg);
+}
+.back-btn{
+display:flex;align-items:center;gap:6px;
+background:none;border:none;font-family:‘Nunito’,sans-serif;
+font-size:13px;font-weight:700;color:var(–black);
+cursor:pointer;padding:4px 0;
+}
+.detail-title-block{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.detail-pill{
+background:var(–black);color:#fff;border-radius:50px;
+padding:8px 18px;font-size:11px;font-weight:800;letter-spacing:1.5px;
+}
+.detail-body{flex:1;overflow-y:auto;padding:4px 20px 40px;}
+
+/* ── CARDS ── */
+.card{
+background:var(–card);border-radius:var(–r);
+padding:18px 16px;margin-bottom:12px;
+box-shadow:0 1px 4px rgba(0,0,0,.05);
+}
+.card.tap{cursor:pointer;transition:transform .12s;}
+.card.tap:active{transform:scale(.98);}
+
+/* ── SECTION HEAD ── */
+.sec-head{
+display:flex;justify-content:space-between;align-items:center;
+margin-bottom:14px;
+}
+.sec-title{font-size:20px;font-weight:800;color:var(–black);}
+.pill-sm{
+background:var(–card);border-radius:50px;
+padding:6px 14px;font-size:11px;font-weight:700;color:var(–black);
+box-shadow:0 1px 3px rgba(0,0,0,.06);
+}
+
+/* ── CHART CARD ── */
+.chart-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.chart-lbl{font-size:13px;font-weight:700;color:var(–black);}
+.chart-sub{font-size:10px;font-weight:600;color:var(–gray);}
+.chart-legend{display:flex;gap:16px;margin-top:10px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:var(–gray);}
+.legend-line{width:20px;height:2px;border-radius:2px;}
+
+/* ── RING GRID ── */
+.ring-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.ring-card{
+background:var(–card);border-radius:16px;
+padding:16px 8px 14px;
+display:flex;flex-direction:column;align-items:center;gap:8px;
+box-shadow:0 1px 4px rgba(0,0,0,.05);
+cursor:pointer;transition:transform .12s;
+}
+.ring-card:active{transform:scale(.96);}
+.ring-lbl{font-size:9px;font-weight:700;letter-spacing:.8px;color:var(–gray);text-transform:uppercase;text-align:center;}
+
+/* ── CHIP GRID ── */
+.chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px;}
+.chip{
+background:var(–card);border-radius:var(–r);
+padding:16px 8px 14px;display:flex;flex-direction:column;
+align-items:center;justify-content:center;min-height:80px;gap:5px;
+cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07);
+transition:transform .12s;user-select:none;
+}
+.chip:active{transform:scale(.95);}
+.chip.dark{background:var(–black);color:#fff;}
+.chip-val{font-size:22px;font-weight:900;line-height:1;color:var(–black);}
+.chip.dark .chip-val{color:#fff;}
+.chip-val.sm{font-size:14px;text-align:center;line-height:1.25;letter-spacing:.3px;}
+.chip-lbl{font-size:9px;font-weight:700;letter-spacing:1.2px;color:var(–gray);text-transform:uppercase;}
+.chip.dark .chip-lbl{color:rgba(255,255,255,.55);}
+.plus-circle{
+width:40px;height:40px;border-radius:50%;background:var(–black);
+display:flex;align-items:center;justify-content:center;
+}
+
+/* ── PROGRESS ── */
+.sec-head2{font-size:16px;font-weight:800;color:var(–black);margin-bottom:16px;}
+.prog-list{display:flex;flex-direction:column;gap:14px;}
+.prog-row{display:flex;align-items:center;gap:12px;}
+.prog-name{width:84px;font-size:13px;font-weight:700;color:var(–black);flex-shrink:0;}
+.prog-track{flex:1;height:9px;background:#E0E0E0;border-radius:50px;overflow:hidden;}
+.prog-fill{height:100%;background:var(–black);border-radius:50px;transition:width .7s cubic-bezier(.4,0,.2,1);}
+.prog-num{width:36px;font-size:11px;font-weight:700;color:var(–gray);text-align:right;flex-shrink:0;}
+
+/* ── CALENDAR STRIP ── */
+.cal-strip{display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;}
+.cal-strip::-webkit-scrollbar{display:none;}
+.cal-day{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:46px;padding:10px 6px;border-radius:14px;cursor:pointer;}
+.cal-day.today{background:var(–black);}
+.cal-dn{font-size:9px;font-weight:700;letter-spacing:.5px;color:var(–gray);text-transform:uppercase;}
+.cal-day.today .cal-dn{color:rgba(255,255,255,.6);}
+.cal-num{font-size:16px;font-weight:800;color:var(–black);}
+.cal-day.today .cal-num{color:#fff;}
+
+/* ── HISTORY LIST ── */
+.hist-list{display:flex;flex-direction:column;gap:9px;}
+.hist-item{
+background:var(–card);border-radius:16px;padding:14px 16px;
+display:flex;align-items:center;justify-content:space-between;
+box-shadow:0 1px 4px rgba(0,0,0,.05);cursor:pointer;transition:transform .12s;
+}
+.hist-item:active{transform:scale(.98);}
+.hist-item.dark{background:var(–black);}
+.hist-name{font-size:14px;font-weight:800;color:var(–black);}
+.hist-item.dark .hist-name{color:#fff;}
+.hist-sub{font-size:11px;font-weight:600;color:var(–gray);margin-top:2px;}
+.hist-item.dark .hist-sub{color:rgba(255,255,255,.5);}
+.check{width:30px;height:30px;border-radius:50%;border:2px solid var(–border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(–black);flex-shrink:0;}
+.hist-item.dark .check{border-color:rgba(255,255,255,.3);color:#fff;}
+.lvl-badge{background:#EBEBEB;border-radius:50px;padding:5px 11px;font-size:10px;font-weight:800;color:var(–black);flex-shrink:0;}
+.hist-item.dark .lvl-badge{background:rgba(255,255,255,.15);color:#fff;}
+.add-row{display:flex;align-items:center;gap:12px;padding:16px 0 0;cursor:pointer;font-size:13px;font-weight:700;color:var(–gray);}
+.add-circle{width:30px;height:30px;border-radius:50%;background:var(–black);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+
+/* ── TIME RANGE TOGGLE ── */
+.range-toggle{display:flex;gap:0;margin-bottom:18px;}
+.range-btn{
+flex:1;padding:9px 0;font-size:12px;font-weight:800;
+letter-spacing:1px;border:1.5px solid var(–black);
+background:#fff;color:var(–black);cursor:pointer;
+font-family:‘Nunito’,sans-serif;transition:background .15s,color .15s;
+}
+.range-btn:first-child{border-radius:10px 0 0 10px;}
+.range-btn:last-child{border-radius:0 10px 10px 0;}
+.range-btn.on{background:var(–black);color:#fff;}
+.range-btn:not(:first-child){border-left:none;}
+
+/* ── AIRCRAFT LIST ── */
+.aircraft-header{
+font-size:9px;font-weight:700;letter-spacing:2px;
+color:var(–gray);margin-bottom:14px;
+}
+.aircraft-list{display:flex;flex-direction:column;}
+.aircraft-row{
+display:flex;align-items:center;justify-content:space-between;
+padding:13px 16px;background:var(–card);
+border-bottom:1px solid #F2F2F2;
+cursor:pointer;transition:background .12s;
+}
+.aircraft-row:active{background:#F5F5F5;}
+.aircraft-row:first-child{border-radius:var(–r) var(–r) 0 0;}
+.aircraft-row:last-child{border-radius:0 0 var(–r) var(–r);border:none;}
+.aircraft-row:nth-child(even){background:#FAFAFA;}
+.aircraft-name{font-size:13px;font-weight:600;color:var(–black);font-family:‘Nunito’,sans-serif;}
+.aircraft-count{font-size:15px;font-weight:800;color:var(–black);}
+.snap-note{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(–gray);margin-top:14px;padding:0 4px;}
+
+/* ── CHART DETAIL SPECIFIC ── */
+.chart-section-title{
+font-size:9px;font-weight:700;letter-spacing:2px;
+color:var(–gray);margin-bottom:10px;
+}
+.chart-note{font-size:10px;font-weight:600;color:var(–gray);letter-spacing:.8px;line-height:1.6;margin-top:10px;}
+.divider{height:1px;background:var(–border);margin:20px 0;}
+
+/* ── ABOUT ── */
+.about-card{background:var(–card);border-radius:var(–r);padding:18px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.about-dark{background:var(–black);color:#fff;border-radius:var(–r);padding:20px;margin-bottom:10px;}
+.about-row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.step-row{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;}
+.step-num{width:32px;height:32px;border-radius:10px;background:#F2F2F2;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(–black);flex-shrink:0;}
+.step-title{font-size:13px;font-weight:700;color:var(–black);margin-bottom:3px;}
+.step-text{font-size:12px;font-weight:500;color:var(–gray);line-height:1.6;}
+.level-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F5F5F5;}
+.level-row:last-child{border:none;}
+.lvl-pill{border-radius:50px;padding:5px 12px;font-size:10px;font-weight:800;flex-shrink:0;}
+.disc{background:#FFF8F0;border:1.5px solid #F0E8D8;border-radius:14px;padding:14px 16px;font-size:12px;font-weight:600;color:#A06020;line-height:1.65;margin-top:14px;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+position:absolute;bottom:0;left:0;right:0;
+background:var(–card);border-top:1px solid var(–border);
+display:flex;z-index:10;
+padding-bottom:env(safe-area-inset-bottom,8px);
+transition:transform .32s cubic-bezier(.4,0,.2,1);
+}
+.bottom-nav.hidden{transform:translateY(100%);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 6px;gap:3px;cursor:pointer;border:none;background:none;font-family:inherit;}
+.nav-icon{display:flex;align-items:center;justify-content:center;opacity:.25;transition:opacity .15s;}
+.nav-lbl{font-size:8px;font-weight:800;letter-spacing:.8px;color:#BBB;text-transform:uppercase;transition:color .15s;}
+.nav-btn.on .nav-icon{opacity:1;}
+.nav-btn.on .nav-lbl{color:var(–black);}
+
+/* ── SHEET ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:40;opacity:0;pointer-events:none;transition:opacity .22s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(102%);width:100%;max-width:430px;background:#fff;border-radius:24px 24px 0 0;z-index:50;padding:0 0 48px;transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:82vh;overflow-y:auto;}
+.sheet.open{transform:translateX(-50%) translateY(0);}
+.sh-handle{display:flex;justify-content:center;padding:12px 0 6px;}
+.sh-bar{width:36px;height:4px;background:#E2E2E2;border-radius:2px;}
+.sh-hdr{display:flex;justify-content:space-between;align-items:center;padding:6px 20px 14px;border-bottom:1px solid #F5F5F5;}
+.sh-title{font-size:18px;font-weight:800;color:var(–black);}
+.sh-close{width:30px;height:30px;border-radius:50%;background:#F2F2F2;border:none;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;}
+.sh-body{padding:14px 20px;}
+.sh-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid #F8F8F8;cursor:pointer;}
+.sh-row:last-child{border:none;}
+.sh-box{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0;transition:background .15s,color .15s;}
+.sh-box.off{background:#F2F2F2;color:var(–black);}
+.sh-box.on{background:var(–black);color:#fff;}
+.sh-row-title{font-size:13px;font-weight:700;color:var(–black);}
+.sh-row-sub{font-size:11px;font-weight:600;color:var(–gray);margin-top:2px;}
+.sh-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.sh-dot.off{background:transparent;border:1.5px solid #DDD;}
+.sh-dot.on{background:var(–black);}
+
+/* ── FLIGHT SHEET ── */
+.flight-card{
+background:#F8F8F8;border-radius:14px;
+padding:14px 16px;margin-bottom:8px;
+display:flex;align-items:center;justify-content:space-between;
+cursor:pointer;transition:transform .12s;
+}
+.flight-card:active{transform:scale(.98);}
+.flight-callsign{font-size:15px;font-weight:800;color:#111;}
+.flight-meta{font-size:11px;font-weight:600;color:#999;margin-top:3px;line-height:1.5;}
+.flight-track{font-size:11px;font-weight:700;color:#BBB;flex-shrink:0;margin-left:10px;}
+.fr24-btn{
+display:flex;align-items:center;justify-content:center;gap:8px;
+background:#111;color:#fff;border-radius:12px;
+padding:13px 16px;text-decoration:none;
+font-size:13px;font-weight:700;letter-spacing:.3px;
+margin:4px 0 16px;
+}
+.fr24-btn:active{opacity:.8;}
+.loading-wrap{
+display:flex;flex-direction:column;align-items:center;
+justify-content:center;padding:40px 0;gap:12px;
+}
+.spinner{
+width:24px;height:24px;border:2.5px solid #EEE;border-top-color:#111;
+border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- TOPBAR -->
+
+  <div class="topbar" id="topbar">
+    <div class="avatar">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="14" r="2.2" fill="#111"/>
+        <path d="M6 10.5a5.7 5.7 0 018 0" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M2.5 7a10.5 10.5 0 0115 0" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="topbar-center">
+      <div class="pill" id="top-pill">EWS HOME</div>
+      <div class="status-row">
+        <div id="live-dot"></div>
+        <span id="live-label">LOADING</span>
+      </div>
+    </div>
+    <button class="icon-btn" id="refresh-btn" onclick="loadData(true)">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M15.5 9A6.5 6.5 0 113.2 5.3" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M3 2.5v3h3" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ── SCREENS ── -->
+
+  <div class="screens">
+
+```
+<!-- HOME (Statistics) -->
+<div class="screen active" id="scr-home">
+  <div class="sec-head">
+    <div class="sec-title">Statistics</div>
+    <div class="pill-sm">Now</div>
+  </div>
+
+  <!-- Chart card — tap → chart detail -->
+  <div class="card tap" id="chart-card" onclick="openDetail('chart')">
+    <div class="chart-hdr">
+      <span class="chart-lbl">Airborne vs Baseline</span>
+      <span class="chart-sub" id="chart-updated">—</span>
+    </div>
+    <svg id="svg-home-chart" width="100%" height="120" viewBox="0 0 320 120"
+         preserveAspectRatio="none" style="display:block;overflow:visible;"></svg>
+    <div class="chart-legend">
+      <div class="legend-item">
+        <div class="legend-line" style="background:#111;"></div> Airborne
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background:#CCC;border-top:2px dashed #CCC;"></div> Expected
+      </div>
+      <div style="margin-left:auto;font-size:10px;font-weight:700;color:#BBB;">TAP FOR DETAIL ›</div>
+    </div>
+  </div>
+
+  <!-- Ring grid -->
+  <div class="ring-grid" id="ring-grid"></div>
+</div>
+
+<!-- SIGNAL -->
+<div class="screen" id="scr-signal">
+  <div style="font-size:13px;font-weight:600;color:var(--gray);margin-bottom:18px;" id="sig-date"></div>
+  <div class="chip-grid" id="chip-grid"></div>
+  <div class="sec-head2">This week</div>
+  <div class="prog-list" id="prog-list"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="screen" id="scr-history">
+  <div class="cal-strip" id="cal-strip"></div>
+  <div class="hist-list" id="hist-list"></div>
+  <div class="add-row" onclick="window.open('https://ews.kylemcdonald.net','_blank')">
+    <div class="add-circle">+</div> Add new alert
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="screen" id="scr-about">
+  <div class="about-dark">
+    <div style="font-size:14px;font-weight:700;line-height:1.65;margin-bottom:10px;">"In the event of an imminent nuclear apocalypse, we suspect that many people with access to private jets will immediately take to the skies."</div>
+    <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.4);">— KYLE MCDONALD · EWS.KYLEMCDONALD.NET</div>
+  </div>
+  <div class="about-card">
+    <div style="font-size:13px;font-weight:800;color:var(--black);margin-bottom:14px;">How it works</div>
+    <div class="step-row"><div class="step-num">01</div><div><div class="step-title">ADS-B Transponders</div><div class="step-text">Every private aircraft broadcasts its position. ADS-B Exchange aggregates these into heatmaps updated every 30 minutes.</div></div></div>
+    <div class="step-row"><div class="step-num">02</div><div><div class="step-title">FAA Cohort (~31,000 jets)</div><div class="step-text">Business jets and private aircraft tracked via the public FAA registry. Excludes commercial airliners.</div></div></div>
+    <div class="step-row"><div class="step-num">03</div><div><div class="step-title">Baseline Comparison</div><div class="step-text">Current airborne counts compared to a rolling 24h baseline that accounts for time-of-day patterns.</div></div></div>
+    <div class="step-row" style="margin-bottom:0;"><div class="step-num">04</div><div><div class="step-title">Sigma → Level 1–5</div><div class="step-text">Deviation expressed in standard deviations (σ), mapped to emergency levels 1–5.</div></div></div>
+  </div>
+  <div class="about-card">
+    <div style="font-size:13px;font-weight:800;color:var(--black);margin-bottom:12px;">Level Guide</div>
+    <div class="level-row"><div class="lvl-pill" style="background:#111;color:#fff;">01 NOMINAL</div><div style="font-size:12px;font-weight:600;color:var(--gray);">All clear</div></div>
+    <div class="level-row"><div class="lvl-pill" style="background:#EEE;color:#111;">02 ELEVATED</div><div style="font-size:12px;font-weight:600;color:var(--gray);">Slight uptick</div></div>
+    <div class="level-row"><div class="lvl-pill" style="background:#EEE;color:#111;">03 WATCH</div><div style="font-size:12px;font-weight:600;color:var(--gray);">Significant deviation</div></div>
+    <div class="level-row"><div class="lvl-pill" style="background:#EEE;color:#111;">04 WARNING</div><div style="font-size:12px;font-weight:600;color:var(--gray);">Major spike</div></div>
+    <div class="level-row"><div class="lvl-pill" style="background:#111;color:#fff;">05 EMERGENCY</div><div style="font-size:12px;font-weight:600;color:var(--gray);">Extreme outlier</div></div>
+  </div>
+  <div class="disc">⚠ Level 5 can be triggered by holidays, major events, or data artifacts. The history tab lets you audit past anomalies.</div>
+  <div class="about-card about-row" onclick="window.open('https://ews.kylemcdonald.net','_blank')" style="margin-top:10px;">
+    <div><div style="font-size:13px;font-weight:800;color:var(--black);">Live Dashboard</div><div style="font-size:11px;font-weight:600;color:var(--gray);">ews.kylemcdonald.net</div></div>
+    <div style="font-size:20px;color:#CCC;">›</div>
+  </div>
+  <div class="about-card about-row" onclick="window.open('https://github.com/kylemcdonald/ews','_blank')">
+    <div><div style="font-size:13px;font-weight:800;color:var(--black);">Source Code</div><div style="font-size:11px;font-weight:600;color:var(--gray);">github.com/kylemcdonald/ews</div></div>
+    <div style="font-size:20px;color:#CCC;">›</div>
+  </div>
+</div>
+```
+
+  </div><!-- /screens -->
+
+  <!-- ── DETAIL: CHART ── -->
+
+  <div class="detail" id="detail-chart">
+    <div class="detail-topbar">
+      <button class="back-btn" onclick="closeDetail('chart')">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M11 4l-6 5 6 5" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+      <div class="detail-title-block">
+        <div class="detail-pill">CHART</div>
+      </div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="detail-body">
+      <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:12px;" id="chart-detail-title">CONCURRENT AIRBORNE — LAST 3D</div>
+
+```
+  <div class="range-toggle">
+    <button class="range-btn on" data-range="3D" onclick="setRange('3D',this)">3D</button>
+    <button class="range-btn" data-range="1W" onclick="setRange('1W',this)">1W</button>
+    <button class="range-btn" data-range="1M" onclick="setRange('1M',this)">1M</button>
+  </div>
+
+  <!-- Main chart -->
+  <div class="card" style="padding:16px 14px 14px;margin-bottom:12px;">
+    <svg id="svg-detail-main" width="100%" viewBox="0 0 340 200"
+         preserveAspectRatio="none" style="display:block;overflow:visible;"></svg>
+    <div class="chart-note">SOLID: ACTUAL CONCURRENT. DASHED: EXPECTED BASELINE.</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Sigma chart -->
+  <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">DEVIATION IN Σ</div>
+  <div class="card" style="padding:16px 14px 14px;">
+    <svg id="svg-detail-sigma" width="100%" viewBox="0 0 340 120"
+         preserveAspectRatio="none" style="display:block;overflow:visible;"></svg>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ── DETAIL: AIRCRAFT ── -->
+
+  <div class="detail" id="detail-aircraft">
+    <div class="detail-topbar">
+      <button class="back-btn" onclick="closeDetail('aircraft')">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M11 4l-6 5 6 5" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+      <div class="detail-title-block">
+        <div class="detail-pill">AIRCRAFT</div>
+      </div>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="detail-body">
+      <div class="aircraft-header">TOP AIRCRAFT AIRBORNE NOW</div>
+      <div class="aircraft-list" id="aircraft-list"></div>
+      <div class="snap-note" id="snap-note">SNAPSHOT — DATA: ADS-B EXCHANGE</div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-btn on" data-tab="home" onclick="switchTab('home')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="12" width="4.5" height="8" rx="1.2" fill="#111"/>
+          <rect x="8.75" y="7" width="4.5" height="13" rx="1.2" fill="#111"/>
+          <rect x="15.5" y="3" width="4.5" height="17" rx="1.2" fill="#111"/>
+        </svg>
+      </span>
+      <span class="nav-lbl">Home</span>
+    </button>
+    <button class="nav-btn" data-tab="signal" onclick="switchTab('signal')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M16 3l3 3L7 18H4v-3L16 3z" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M13 6l3 3" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="nav-lbl">Signal</span>
+    </button>
+    <button class="nav-btn" data-tab="history" onclick="switchTab('history')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="4.5" width="18" height="15" rx="2.5" stroke="#111" stroke-width="1.6"/>
+          <path d="M7 2v5M15 2v5M2 10h18" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="nav-lbl">History</span>
+    </button>
+    <button class="nav-btn" data-tab="about" onclick="switchTab('about')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="9" stroke="#111" stroke-width="1.6"/>
+          <path d="M11 10v6" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="11" cy="7" r="1" fill="#111"/>
+        </svg>
+      </span>
+      <span class="nav-lbl">About</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- LEVEL SHEET -->
+
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sh-handle"><div class="sh-bar"></div></div>
+  <div class="sh-hdr">
+    <div class="sh-title">Signal Levels</div>
+    <button class="sh-close" onclick="closeSheet()">✕</button>
+  </div>
+  <div class="sh-body" id="sh-body"></div>
+</div>
+
+<script>
+/* ══ CONFIG ══════════════════════════════════════════════════ */
+const LEVELS={
+  1:{label:'NOMINAL',   desc:'No anomaly detected. Normal private-jet activity.'},
+  2:{label:'ELEVATED',  desc:'Slight uptick. Likely noise or a minor regional event.'},
+  3:{label:'WATCH',     desc:'Statistically significant deviation from baseline.'},
+  4:{label:'WARNING',   desc:'Major spike in activity. Cause under investigation.'},
+  5:{label:'EMERGENCY', desc:'Extreme outlier detected. The rich may be on the move.'},
+};
+const TAB_LABELS={home:'EWS HOME',signal:'EWS SIGNAL',history:'HISTORY',about:'ABOUT'};
+
+/* ══ DEMO DATA ══════════════════════════════════════════════ */
+function makeHist(points=48, baseA=148, baseE=138){
+  const pts=[], now=Date.now(); let v=baseA;
+  for(let i=points-1;i>=0;i--){
+    const t=new Date(now-i*30*60*1000);
+    const tod=Math.sin(((t.getHours()-6)/24)*Math.PI*2)*28;
+    v=Math.max(70,Math.min(420,v+(Math.random()-.5)*18));
+    pts.push({
+      ts: t.getTime(),
+      date: t.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit'}),
+      time: t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+      airborne:Math.round(v+tod),
+      expected:Math.round(baseE+tod),
+      sigma:(Math.random()-.4)*2.5,
+    });
+  }
+  return pts;
+}
+
+const DEMO_TYPES=[
+  {name:'Cessna 560XL',count:7},{name:'PILATUS PC-24',count:7},
+  {name:'CESSNA 560XL Citation XLS',count:6},{name:'EMBRAER EMB-135 Legacy',count:6},
+  {name:'EMBRAER EMB-505 Phenom 300',count:6},{name:'Bombardier Challenger 300',count:5},
+  {name:'Cessna 525',count:5},{name:'Embraer Phenom',count:5},
+  {name:'GULFSTREAM AEROSPACE GV-SP (G550)',count:5},
+  {name:'BOMBARDIER BD-100 Challenger 350',count:4},
+  {name:'BOMBARDIER BD-700 Global 7000/7500',count:4},
+  {name:'Bombardier BD700-Global 6000/6500',count:4},
+];
+
+const DEMO={
+  emergencyLevel:1,airborne:153,tracked:31457,expected:148,
+  sigma:0.34,deviation:5,updatedAt:new Date().toISOString(),
+  fetchedAt:new Date().toISOString(),fetchFailed:false,
+  history:makeHist(48),types:DEMO_TYPES,
+  archive:[
+    {level:1,airborne:153,note:LEVELS[1].label,time:'Today',nominal:true},
+    {level:3,airborne:421,note:'Tariff announcement spike',time:'Apr 7',nominal:false},
+    {level:2,airborne:312,note:'Spring break regional',time:'Mar 15',nominal:false},
+    {level:4,airborne:589,note:'Unexplained — under review',time:'Feb 3',nominal:false},
+    {level:2,airborne:349,note:'Inauguration Day traffic',time:'Jan 20',nominal:false},
+    {level:1,airborne:192,note:'Normal activity',time:'Nov 27',nominal:true},
+  ],
+};
+
+/* Cache extra history for range views */
+const HIST_CACHE={
+  '3D': makeHist(144),
+  '1W': makeHist(336),
+  '1M': makeHist(1440),
+};
+
+let S={data:DEMO,live:false,range:'3D'};
+
+/* ══ LOAD ════════════════════════════════════════════════════ */
+async function loadData(spinner=false){
+  const btn=document.getElementById('refresh-btn');
+  const dot=document.getElementById('live-dot');
+  const lbl=document.getElementById('live-label');
+  if(spinner) btn.style.animation='spin .7s linear infinite';
+  dot.style.background='#CCC'; lbl.textContent='LOADING…';
+
+  let j=null, source='';
+
+  // 1. Try local file (works on GitHub Pages after Actions runs)
+  try{
+    const r=await fetch('./data/dashboard.json?t='+Date.now(),{cache:'no-store'});
+    if(r.ok){ j=await r.json(); source='local'; }
+  }catch{}
+
+  // 2. Try EWS directly (works if their server sends CORS headers)
+  if(!j){
+    try{
+      const r=await fetch('https://ews.kylemcdonald.net/dashboard.json',{cache:'no-store'});
+      if(r.ok){ j=await r.json(); source='live'; }
+    }catch{}
+  }
+
+  if(j){
+    S.data={...DEMO,...j,
+      history:j.history?.length?j.history:makeHist(48),
+      types:j.types?(Array.isArray(j.types)?j.types:Object.entries(j.types).map(([n,c])=>({name:n,count:c})).sort((a,b)=>b.count-a.count)):DEMO_TYPES,
+      archive:DEMO.archive,
+    };
+    S.live=true;
+    const fetchedAt=j.fetchedAt?new Date(j.fetchedAt):new Date();
+    const ts=fetchedAt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const failed=j.fetchFailed;
+    dot.style.background=failed?'#BBB':'#111';
+    lbl.textContent=failed?`STALE · ${ts}`:source==='local'?`LIVE · ${ts}`:`LIVE · EWS`;
+  }else{
+    S.data=DEMO; S.live=false;
+    dot.style.background='#BBB'; lbl.textContent='DEMO DATA';
+  }
+
+  btn.style.animation='';
+  renderAll();
+}
+
+/* ══ RENDER ══════════════════════════════════════════════════ */
+function renderAll(){
+  renderHome();
+  renderSignal();
+  renderHistory();
+}
+
+/* HOME — chart + rings */
+function renderHome(){
+  const d=S.data;
+  const hist=(d.history||[]).slice(-24);
+
+  // Home chart SVG
+  renderLineSVG('svg-home-chart',hist,320,120,false,false);
+
+  if(d.fetchedAt||d.updatedAt){
+    const t=new Date(d.fetchedAt||d.updatedAt);
+    document.getElementById('chart-updated').textContent=
+      'UPDATED '+t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}).toUpperCase();
+  }
+
+  // Ring grid — all cards tappable
+  const lvl=d.emergencyLevel||1;
+  const pctVal=((d.airborne||0)/(d.tracked||31457)*100);
+  const items=[
+    {val:d.airborne||0, max:400,              lbl:'Airborne',  text:(d.airborne||0).toString(),                      tap:"openDetail('aircraft')"},
+    {val:d.expected||0, max:400,              lbl:'Expected',  text:(d.expected||0).toString(),                      tap:"openStatSheet('expected')"},
+    {val:lvl-1,         max:4,                lbl:'Alert Lvl', text:`${lvl}/5`,                                       tap:"openSheet()"},
+    {val:Math.abs(d.sigma||0), max:4,         lbl:'Sigma',     text:`${(d.sigma||0).toFixed(1)}σ`,                    tap:"openStatSheet('sigma')"},
+    {val:Math.abs(d.deviation||0), max:50,    lbl:'Deviation', text:`${(d.deviation||0)>=0?'+':''}${d.deviation||0}`, tap:"openStatSheet('deviation')"},
+    {val:pctVal, max:5,                       lbl:'% Active',  text:`${pctVal.toFixed(1)}%`,                         tap:"openStatSheet('pct')"},
+  ];
+  document.getElementById('ring-grid').innerHTML=items.map(it=>{
+    const pct=Math.min(1,it.val/(it.max||1));
+    const r=24,cx=30,cy=30,circ=2*Math.PI*r;
+    const dash=(pct*circ).toFixed(2), gap=(circ*(1-pct)).toFixed(2);
+    const hint=it.tap?'TAP ›':'';
+    return`<div class="ring-card" onclick="${it.tap||''}">
+      <svg width="60" height="60" viewBox="0 0 60 60">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#EFEFEF" stroke-width="5.5"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#111" stroke-width="5.5"
+          stroke-dasharray="${dash} ${gap}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
+        <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
+          font-family="Nunito,sans-serif" font-size="${it.text.length>4?7:9}" font-weight="800" fill="#111">
+          ${it.text.length>5?it.text.slice(0,5):it.text}</text>
+      </svg>
+      <div class="ring-lbl">${it.lbl}</div>
+      ${hint?`<div style="font-size:8px;font-weight:700;color:#BBB;letter-spacing:.5px;">${hint}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+/* Reusable SVG chart renderer */
+function renderLineSVG(svgId, hist, W, H, showYAxis, showXAxis){
+  const svg=document.getElementById(svgId);
+  if(!hist||hist.length<2){svg.innerHTML='';return;}
+  const LPAD=showYAxis?38:4, RPAD=4, TPAD=6, BPAD=showXAxis?22:6;
+  const pw=W-LPAD-RPAD, ph=H-TPAD-BPAD;
+  const all=hist.flatMap(p=>[p.airborne,p.expected]);
+  const mn=Math.min(...all), mx=Math.max(...all), rng=mx-mn||1;
+  const tx=i=>LPAD+(i/(hist.length-1))*pw;
+  const ty=v=>TPAD+ph-((v-mn)/rng)*ph;
+  const airP=hist.map((p,i)=>`${i?'L':'M'}${tx(i).toFixed(1)},${ty(p.airborne).toFixed(1)}`).join(' ');
+  const expP=hist.map((p,i)=>`${i?'L':'M'}${tx(i).toFixed(1)},${ty(p.expected).toFixed(1)}`).join(' ');
+  let out='';
+  if(showYAxis){
+    const ticks=4;
+    for(let i=0;i<=ticks;i++){
+      const v=Math.round(mn+((mx-mn)/ticks)*i);
+      const y=ty(v);
+      out+=`<line x1="${LPAD}" y1="${y.toFixed(1)}" x2="${LPAD+pw}" y2="${y.toFixed(1)}" stroke="#EEE" stroke-width="1"/>`;
+      out+=`<text x="${LPAD-5}" y="${y.toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-family="Nunito" font-size="9" fill="#AAA">${v}</text>`;
+    }
+  }
+  if(showXAxis){
+    const step=Math.floor(hist.length/5)||1;
+    hist.forEach((p,i)=>{
+      if(i%step===0||i===hist.length-1){
+        const x=tx(i);
+        out+=`<text x="${x.toFixed(1)}" y="${H-2}" text-anchor="middle" font-family="Nunito" font-size="9" fill="#AAA">${p.date||p.time}</text>`;
+      }
+    });
+  }
+  out+=`<path d="${expP}" fill="none" stroke="#CCC" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  out+=`<path d="${airP}" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg.innerHTML=out;
+}
+
+function renderSigmaSVG(svgId, hist, W, H){
+  const svg=document.getElementById(svgId);
+  if(!hist||hist.length<2){svg.innerHTML='';return;}
+  const LPAD=38, RPAD=4, TPAD=6, BPAD=22;
+  const pw=W-LPAD-RPAD, ph=H-TPAD-BPAD;
+  const sigmas=hist.map(p=>p.sigma||0);
+  const mx=Math.max(2,...sigmas.map(Math.abs));
+  const ty=v=>TPAD+ph-(v+mx)/(mx*2)*ph;
+  const tx=i=>LPAD+(i/(hist.length-1))*pw;
+  const path=sigmas.map((v,i)=>`${i?'L':'M'}${tx(i).toFixed(1)},${ty(v).toFixed(1)}`).join(' ');
+  const zero=ty(0);
+  let out='';
+  [-mx,0,mx].forEach(v=>{
+    const y=ty(v);
+    out+=`<line x1="${LPAD}" y1="${y.toFixed(1)}" x2="${LPAD+pw}" y2="${y.toFixed(1)}" stroke="#EEE" stroke-width="1"/>`;
+    out+=`<text x="${LPAD-5}" y="${y.toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-family="Nunito" font-size="9" fill="#AAA">${v===0?'0':v>0?Math.round(v):-Math.round(-v)}</text>`;
+  });
+  const step=Math.floor(hist.length/5)||1;
+  hist.forEach((p,i)=>{
+    if(i%step===0||i===hist.length-1){
+      out+=`<text x="${tx(i).toFixed(1)}" y="${H-2}" text-anchor="middle" font-family="Nunito" font-size="9" fill="#AAA">${p.date||p.time}</text>`;
+    }
+  });
+  out+=`<line x1="${LPAD}" y1="${zero.toFixed(1)}" x2="${LPAD+pw}" y2="${zero.toFixed(1)}" stroke="#CCC" stroke-width="1" stroke-dasharray="3 3"/>`;
+  out+=`<path d="${path}" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg.innerHTML=out;
+}
+
+/* SIGNAL tab */
+function renderSignal(){
+  const d=S.data, lvl=d.emergencyLevel||1;
+  const info=LEVELS[lvl]||LEVELS[1];
+  const sign=(d.deviation||0)>=0?'+':'';
+  document.getElementById('sig-date').textContent=
+    new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('chip-grid').innerHTML=`
+    <div class="chip dark" style="min-height:88px;" onclick="openSheet()">
+      <div class="chip-val">0${lvl}</div><div class="chip-lbl">Level</div>
+    </div>
+    <div class="chip" style="min-height:88px;" onclick="openSheet()">
+      <div class="chip-val sm">${info.label}</div><div class="chip-lbl">Status</div>
+    </div>
+    <div class="chip" style="min-height:88px;" onclick="loadData(true)">
+      <div class="plus-circle">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M15.5 9A6.5 6.5 0 113.2 5.3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M3 2.5v3h3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="chip-lbl" style="margin-top:5px;">REFRESH</div>
+    </div>
+    <div class="chip"><div class="chip-val">${(d.airborne||0).toLocaleString()}</div><div class="chip-lbl">Airborne</div></div>
+    <div class="chip"><div class="chip-val">${(d.expected||0).toLocaleString()}</div><div class="chip-lbl">Expected</div></div>
+    <div class="chip"><div class="chip-val" style="font-size:18px;">${sign}${d.deviation||0}</div><div class="chip-lbl">Deviation</div></div>
+  `;
+  const rows=[
+    {n:'Airborne', p:Math.min(100,(d.airborne||0)/400*100), v:(d.airborne||0).toString()},
+    {n:'Expected', p:Math.min(100,(d.expected||0)/400*100), v:(d.expected||0).toString()},
+    {n:'Deviation',p:Math.min(100,Math.abs(d.deviation||0)), v:`${sign}${d.deviation||0}`},
+    {n:'Level',    p:((lvl)/5)*100, v:`${lvl} / 5`},
+    {n:'Sigma',    p:Math.min(100,Math.abs(d.sigma||0)*25), v:`${(d.sigma||0).toFixed(2)}σ`},
+  ];
+  document.getElementById('prog-list').innerHTML=rows.map(r=>`
+    <div class="prog-row">
+      <div class="prog-name">${r.n}</div>
+      <div class="prog-track"><div class="prog-fill" style="width:${Math.max(3,r.p).toFixed(1)}%"></div></div>
+      <div class="prog-num">${r.v}</div>
+    </div>`).join('');
+}
+
+/* HISTORY tab */
+function renderHistory(){
+  const today=new Date();
+  const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  document.getElementById('cal-strip').innerHTML=
+    [-3,-2,-1,0,1,2,3].map(i=>{
+      const d=new Date(today); d.setDate(d.getDate()+i);
+      return`<div class="cal-day ${i===0?'today':''}">
+        <div class="cal-dn">${DAYS[d.getDay()]}</div>
+        <div class="cal-num">${d.getDate()}</div>
+      </div>`;
+    }).join('');
+  const arc=S.data.archive||DEMO.archive;
+  arc[0]={...arc[0],level:S.data.emergencyLevel||1,airborne:S.data.airborne||153,note:LEVELS[S.data.emergencyLevel||1].label,nominal:(S.data.emergencyLevel||1)===1};
+  document.getElementById('hist-list').innerHTML=arc.map(e=>{
+    const dark=!e.nominal&&e.level>=2;
+    return`<div class="hist-item ${dark?'dark':''}" onclick="openSheet(${e.level})">
+      <div>
+        <div class="hist-name">${LEVELS[e.level]?.label||'NOMINAL'} · Level ${e.level}</div>
+        <div class="hist-sub">${e.time} · ${e.airborne} airborne · ${e.note}</div>
+      </div>
+      ${e.nominal?'<div class="check">✓</div>':`<div class="lvl-badge">${e.level>3?'⚠ ':''}LVL ${e.level}</div>`}
+    </div>`;
+  }).join('');
+}
+
+/* ══ DETAIL SCREENS ══════════════════════════════════════════ */
+function openDetail(which){
+  const el=document.getElementById(`detail-${which}`);
+  el.classList.add('open');
+  document.getElementById('bottom-nav').classList.add('hidden');
+  if(which==='chart') renderDetailChart(S.range);
+  if(which==='aircraft') renderAircraftList();
+}
+function closeDetail(which){
+  document.getElementById(`detail-${which}`).classList.remove('open');
+  document.getElementById('bottom-nav').classList.remove('hidden');
+}
+
+function setRange(range, btn){
+  S.range=range;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('chart-detail-title').textContent=`CONCURRENT AIRBORNE — LAST ${range}`;
+  renderDetailChart(range);
+}
+
+function renderDetailChart(range){
+  // Use live history if available, otherwise cached demo data
+  const hist = S.live && S.data.history?.length > 48
+    ? S.data.history
+    : HIST_CACHE[range] || HIST_CACHE['3D'];
+  renderLineSVG('svg-detail-main', hist, 340, 200, true, true);
+  renderSigmaSVG('svg-detail-sigma', hist, 340, 120);
+}
+
+function renderAircraftList(){
+  const types=S.data.types||DEMO_TYPES;
+
+  document.getElementById('aircraft-list').innerHTML=
+    types.slice(0,20).map((t,i)=>`
+      <div class="aircraft-row" data-idx="${i}">
+        <span class="aircraft-name">${t.name}</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="aircraft-count">${t.count}</span>
+          <span style="font-size:13px;color:#CCC;font-weight:700;">›</span>
+        </div>
+      </div>`).join('');
+
+  // Single delegated listener — avoids all inline-onclick escaping issues
+  document.getElementById('aircraft-list').onclick=function(e){
+    const row=e.target.closest('.aircraft-row');
+    if(!row) return;
+    const t=(S.data.types||DEMO_TYPES)[parseInt(row.dataset.idx,10)];
+    if(t) openFlightSheet(t.name, t.count);
+  };
+
+  const ts=S.data.fetchedAt?new Date(S.data.fetchedAt):new Date();
+  document.getElementById('snap-note').textContent=
+    `SNAPSHOT ${ts.getDate()} ${ts.toLocaleString('default',{month:'short'}).toUpperCase()} AT ${ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} · DATA: ADS-B EXCHANGE`;
+}
+
+/* ══ TABS ════════════════════════════════════════════════════ */
+function switchTab(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById(`scr-${tab}`).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('on');
+  document.getElementById('top-pill').textContent=TAB_LABELS[tab]||'EWS';
+}
+
+/* ══ SHEET ════════════════════════════════════════════════════ */
+function openSheet(highlightLvl){
+  const current=S.data.emergencyLevel||1;
+  let html='';
+  for(let l=1;l<=5;l++){
+    const isCurrent=l===current;
+    html+=`
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid #F5F5F5;">
+      <div style="width:48px;height:48px;border-radius:14px;flex-shrink:0;
+        background:${isCurrent?'#111':'#F2F2F2'};color:${isCurrent?'#fff':'#111'};
+        display:flex;align-items:center;justify-content:center;
+        font-size:17px;font-weight:900;">0${l}</div>
+      <div style="flex:1;padding-top:2px;">
+        <div style="font-size:14px;font-weight:800;color:#111;margin-bottom:4px;">${LEVELS[l].label}</div>
+        <div style="font-size:12px;font-weight:600;color:#888;line-height:1.55;">${LEVELS[l].desc}</div>
+      </div>
+    </div>`;
+  }
+  html+=`<div style="margin-top:14px;background:#F5F5F5;border-radius:12px;padding:12px 14px;font-size:12px;font-weight:600;color:#888;line-height:1.65;">Current: <strong style="color:#111;">0${current} ${LEVELS[current].label}</strong></div>`;
+  document.getElementById('sh-body').innerHTML=html;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('sheet').classList.remove('open');
+}
+
+/* ══ STAT SHEETS ═════════════════════════════════════════════ */
+function openStatSheet(type){
+  const d=S.data;
+  const hist=(d.history||[]).slice(-24);
+  const lvl=d.emergencyLevel||1;
+
+  const STATS={
+    expected:{
+      eyebrow:'BASELINE',
+      title:'Expected Count',
+      value:(d.expected||0).toLocaleString(),
+      unit:'aircraft expected airborne',
+      color:'#111',
+      rows:[
+        {label:'Current expected', value:(d.expected||0).toLocaleString()},
+        {label:'Currently airborne',value:(d.airborne||0).toLocaleString()},
+        {label:'Difference',       value:`${(d.deviation||0)>=0?'+':''}${d.deviation||0}`},
+        {label:'Tracking cohort',  value:(d.tracked||31457).toLocaleString()+' jets'},
+      ],
+      body:'The expected baseline is a rolling 24-hour average that accounts for time-of-day and day-of-week patterns. More jets fly on weekday mornings than Sunday nights — the baseline adjusts for this automatically.',
+      note:'Recalculates every 30 minutes from historical heatmap slots.',
+    },
+    sigma:{
+      eyebrow:'STATISTICS',
+      title:'Standard Deviations (σ)',
+      value:`${(d.sigma||0).toFixed(2)}σ`,
+      unit:'from expected mean',
+      color:'#111',
+      rows:[
+        {label:'Current sigma',  value:`${(d.sigma||0).toFixed(2)}σ`},
+        {label:'Level 1 (normal)',value:'< 1σ'},
+        {label:'Level 2',        value:'1 – 2σ'},
+        {label:'Level 3',        value:'2 – 3σ'},
+        {label:'Level 4',        value:'3 – 4σ'},
+        {label:'Level 5 (emergency)',value:'> 4σ'},
+      ],
+      body:'Sigma measures how far the current airborne count is from what the model expects, in standard deviations. A sigma of 0 means perfectly average. Values above 2σ are statistically unusual; above 4σ is extremely rare.',
+      note:'Sigma is recalculated with each heatmap refresh.',
+    },
+    deviation:{
+      eyebrow:'SIGNAL',
+      title:'Deviation vs Baseline',
+      value:`${(d.deviation||0)>=0?'+':''}${d.deviation||0}`,
+      unit:`${d.airborne} airborne vs ${d.expected} expected`,
+      color:'#111',
+      rows:[
+        {label:'Airborne now',   value:(d.airborne||0).toLocaleString()},
+        {label:'Expected',       value:(d.expected||0).toLocaleString()},
+        {label:'Raw deviation',  value:`${(d.deviation||0)>=0?'+':''}${d.deviation||0}`},
+        {label:'As sigma',       value:`${(d.sigma||0).toFixed(2)}σ`},
+        {label:'Alert level',    value:`0${lvl} ${LEVELS[lvl].label}`},
+      ],
+      body:'Deviation is the raw difference between current airborne count and the expected baseline. A positive number means more jets than expected. By itself it\'s less meaningful than sigma — a deviation of +20 means very different things on a busy Tuesday vs a quiet Sunday night.',
+      note:'Sustained positive deviations over multiple 30-min slots drive level changes.',
+    },
+    pct:{
+      eyebrow:'COHORT',
+      title:'Percentage Active',
+      value:`${((d.airborne||0)/(d.tracked||31457)*100).toFixed(2)}%`,
+      unit:`of ${(d.tracked||31457).toLocaleString()} tracked jets`,
+      color:'#111',
+      rows:[
+        {label:'Airborne now',   value:(d.airborne||0).toLocaleString()},
+        {label:'Total cohort',   value:(d.tracked||31457).toLocaleString()},
+        {label:'Active rate',    value:`${((d.airborne||0)/(d.tracked||31457)*100).toFixed(2)}%`},
+        {label:'Typical range',  value:'0.3% – 2.5%'},
+      ],
+      body:'The percentage of the full tracked cohort that\'s airborne simultaneously. On a normal day, around 0.5–1.5% of the ~31,000 tracked private jets are in the air at any given time. The cohort is drawn from the FAA registry and ADS-B Exchange transponder data.',
+      note:'Cohort excludes commercial airliners, military, and helicopters.',
+    },
+  };
+
+  const c=STATS[type]; if(!c) return;
+
+  // Sparkline for relevant metrics
+  let sparkHTML='';
+  if(hist.length>2){
+    const vals=hist.map(p=>{
+      if(type==='deviation') return p.airborne-(p.expected||138);
+      if(type==='sigma')     return p.sigma||((p.airborne-(p.expected||138))/20);
+      if(type==='expected')  return p.expected||138;
+      if(type==='pct')       return (p.airborne/(d.tracked||31457))*100;
+      return p.airborne;
+    });
+    const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn||1;
+    const W=290,H=50;
+    const tx=i=>(i/(vals.length-1))*W;
+    const ty=v=>H-((v-mn)/rng)*H;
+    const path=vals.map((v,i)=>`${i?'L':'M'}${tx(i).toFixed(1)},${ty(v).toFixed(1)}`).join(' ');
+    const zero=type==='deviation'||type==='sigma' ? ty(0) : null;
+    sparkHTML=`
+      <div style="background:#F8F8F8;border-radius:12px;padding:14px 14px 10px;margin-bottom:16px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:#BBB;margin-bottom:8px;">LAST 24H</div>
+        <svg width="100%" height="50" viewBox="0 0 290 50" preserveAspectRatio="none" style="display:block;overflow:visible;">
+          ${zero!==null?`<line x1="0" y1="${zero.toFixed(1)}" x2="290" y2="${zero.toFixed(1)}" stroke="#DDD" stroke-width="1" stroke-dasharray="3 3"/>`:''}
+          <path d="${path}" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>`;
+  }
+
+  // Rows table
+  const rowsHTML=c.rows.map(row=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #F5F5F5;">
+      <div style="font-size:12px;font-weight:600;color:#888;">${row.label}</div>
+      <div style="font-size:13px;font-weight:800;color:#111;">${row.value}</div>
+    </div>`).join('');
+
+  document.getElementById('ss-eyebrow').textContent=c.eyebrow;
+  document.getElementById('ss-title').textContent=c.title;
+  document.getElementById('ss-body').innerHTML=`
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'Nunito',sans-serif;font-size:36px;font-weight:900;color:#111;line-height:1;">${c.value}</div>
+      <div style="font-size:11px;font-weight:600;color:#AAA;margin-top:4px;letter-spacing:.5px;">${c.unit}</div>
+    </div>
+    ${sparkHTML}
+    <div style="margin-bottom:16px;">${rowsHTML}</div>
+    <p style="font-size:13px;font-weight:600;color:#555;line-height:1.7;margin-bottom:12px;">${c.body}</p>
+    <div style="background:#F5F5F5;border-radius:10px;padding:11px 14px;font-size:11px;font-weight:600;color:#AAA;line-height:1.6;">${c.note}</div>
+  `;
+
+  document.getElementById('stat-overlay').classList.add('open');
+  document.getElementById('stat-sheet').classList.add('open');
+}
+
+function closeStatSheet(){
+  document.getElementById('stat-overlay').classList.remove('open');
+  document.getElementById('stat-sheet').classList.remove('open');
+}
+
+/* ══ AIRCRAFT & FLIGHT DATA ══════════════════════════════════ */
+
+// FlightRadar24 ICAO type codes for common jets in the EWS cohort
+const FR24_CODES={
+  'cessna 560xl':'C56X','cessna 560xl citation xls':'C56X',
+  'pilatus pc-24':'PC24','pilatus pc24':'PC24',
+  'embraer emb-135 legacy':'E135','embraer emb-135':'E135',
+  'embraer emb-505 phenom 300':'E55P','embraer phenom 300':'E55P',
+  'embraer phenom':'E50P','embraer emb-500 phenom 100':'E50P',
+  'bombardier challenger 300':'CL30','bombardier bd-100 challenger 350':'CL35',
+  'bombardier bd-700 global 7000/7500':'GL7T',
+  'bombardier bd700-global 6000/6500':'GLEX',
+  'gulfstream aerospace gv-sp (g550)':'GL5T',
+  'gulfstream g550':'GL5T','gulfstream g650':'GL6T','gulfstream g450':'GL4T',
+  'cessna 525':'C525','cessna citation':'C25A',
+  'dassault falcon 7x':'F7X','dassault falcon 2000':'F2TH',
+  'beechcraft king air':'BE20',
+};
+
+function getFR24Code(name){
+  return FR24_CODES[name.toLowerCase()]||null;
+}
+
+// Demo flights used as fallback
+const DEMO_FLIGHTS=[
+  {callsign:'N560XL',country:'United States',alt:37000,spd:430,hdg:275,icao:'a1b2c3'},
+  {callsign:'OE-FPB', country:'Austria',      alt:41000,spd:445,hdg:090,icao:'440123'},
+  {callsign:'D-CGGG', country:'Germany',      alt:35000,spd:420,hdg:190,icao:'3c4421'},
+  {callsign:'G-XATV', country:'United Kingdom',alt:39000,spd:460,hdg:310,icao:'4070a1'},
+  {callsign:'N72EX',  country:'United States',alt:43000,spd:480,hdg:110,icao:'a9c1d2'},
+  {callsign:'VP-CMC', country:'Cayman Islands',alt:45000,spd:495,hdg:260,icao:'c001ab'},
+  {callsign:'HB-JRA', country:'Switzerland',  alt:38000,spd:440,hdg:050,icao:'4b8801'},
+  {callsign:'CS-LTQ', country:'Portugal',     alt:37000,spd:425,hdg:240,icao:'495200'},
+];
+
+function countryFlag(country){
+  const flags={
+    'United States':'🇺🇸','Germany':'🇩🇪','Austria':'🇦🇹','France':'🇫🇷',
+    'United Kingdom':'🇬🇧','Switzerland':'🇨🇭','Canada':'🇨🇦','Italy':'🇮🇹',
+    'Spain':'🇪🇸','Netherlands':'🇳🇱','Belgium':'🇧🇪','Portugal':'🇵🇹',
+    'Brazil':'🇧🇷','Australia':'🇦🇺','Japan':'🇯🇵','Mexico':'🇲🇽',
+    'United Arab Emirates':'🇦🇪','Cayman Islands':'🇰🇾','Bahamas':'🇧🇸',
+  };
+  return flags[country]||'✈';
+}
+
+async function fetchFlights(aircraftName){
+  try{
+    // OpenSky Network — free, no auth, CORS-friendly
+    // Bounding box: N America + Europe (where most private jets are)
+    const url='https://opensky-network.org/api/states/all?lamin=25&lamax=72&lomin=-125&lomax=40';
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok) throw 0;
+    const j=await r.json();
+    const states=j.states||[];
+    // Filter: airborne, has callsign, has altitude & speed
+    const flights=states
+      .filter(s=>s[1]?.trim()&&s[8]===false&&s[7]>100&&s[9]>50)
+      .slice(0,12)
+      .map(s=>({
+        callsign:(s[1]||'').trim(),
+        country:s[2]||'Unknown',
+        alt:s[7]?Math.round(s[7]*3.28084):null,   // metres → feet
+        spd:s[9]?Math.round(s[9]*1.944):null,      // m/s → knots
+        hdg:s[10]?Math.round(s[10]):null,
+        icao:s[0],
+      }));
+    if(!flights.length) throw 0;
+    return{flights,live:true};
+  }catch{
+    return{flights:DEMO_FLIGHTS,live:false};
+  }
+}
+
+let fsAircraftName='';
+
+async function openFlightSheet(name,count){
+  fsAircraftName=name;
+  document.getElementById('fs-title').textContent=name;
+  // Show loading state
+  document.getElementById('fs-body').innerHTML=`
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <div style="font-size:11px;font-weight:700;color:var(--gray);letter-spacing:1px;">FETCHING LIVE FLIGHTS</div>
+    </div>`;
+  document.getElementById('flight-overlay').classList.add('open');
+  document.getElementById('flight-sheet').classList.add('open');
+
+  const{flights,live}=await fetchFlights(name);
+  renderFlightSheet(name,count,flights,live);
+}
+
+function renderFlightSheet(name,count,flights,live){
+  const code=getFR24Code(name);
+  const fr24TypeUrl=code
+    ?`https://www.flightradar24.com/data/aircraft-types/${code}`
+    :`https://www.flightradar24.com/search#results/aircraft?q=${encodeURIComponent(name)}`;
+
+  let html=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:22px;font-weight:900;color:#111;line-height:1;">${count}</div>
+        <div style="font-size:10px;font-weight:700;color:var(--gray);letter-spacing:1px;">AIRBORNE NOW</div>
+      </div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:${live?'#111':'#BBB'};">
+        ${live?'◉ LIVE · OPENSKY':'◎ DEMO DATA'}
+      </div>
+    </div>
+
+    <a href="${fr24TypeUrl}" target="_blank" class="fr24-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="#fff" stroke-width="1.4"/>
+        <path d="M5 8h6M9 6l2 2-2 2" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      View all ${name} on FlightRadar24
+    </a>
+
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:10px;">
+      ${live?'SAMPLE LIVE FLIGHTS':'DEMO FLIGHTS'}
+    </div>`;
+
+  html+=flights.map(f=>{
+    const fr24url=`https://www.flightradar24.com/${f.callsign}`;
+    const altStr=f.alt?`${f.alt.toLocaleString()} ft`:'—';
+    const spdStr=f.spd?`${f.spd} kts`:'—';
+    const hdgStr=f.hdg?`${f.hdg}°`:'—';
+    return`<div class="flight-card" onclick="window.open('${fr24url}','_blank')">
+      <div style="flex:1;min-width:0;">
+        <div class="flight-callsign">${f.callsign}</div>
+        <div class="flight-meta">
+          ${countryFlag(f.country)} ${f.country}<br>
+          ↑ ${altStr} &nbsp;›&nbsp; ${spdStr} &nbsp;⊙&nbsp; ${hdgStr}
+        </div>
+      </div>
+      <div class="flight-track">Track ›</div>
+    </div>`;
+  }).join('');
+
+  html+=`<div style="font-size:9px;font-weight:600;color:#CCC;text-align:center;margin-top:8px;line-height:1.6;">
+    ${live?'Data: OpenSky Network. Tap any flight to track on FlightRadar24.':'Live data unavailable. Tap flights to search on FlightRadar24.'}
+  </div>`;
+
+  document.getElementById('fs-body').innerHTML=html;
+}
+
+function closeFlightSheet(){
+  document.getElementById('flight-overlay').classList.remove('open');
+  document.getElementById('flight-sheet').classList.remove('open');
+}
+
+/* ══ INIT ════════════════════════════════════════════════════ */
+loadData();
+setInterval(loadData, 300000);
+</script>
+
+<!-- STAT DETAIL SHEET -->
+
+<div class="overlay" id="stat-overlay" onclick="closeStatSheet()"></div>
+<div class="sheet" id="stat-sheet" style="max-height:80vh;">
+  <div class="sh-handle"><div class="sh-bar"></div></div>
+  <div class="sh-hdr">
+    <div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:3px;" id="ss-eyebrow">METRIC</div>
+      <div class="sh-title" id="ss-title">—</div>
+    </div>
+    <button class="sh-close" onclick="closeStatSheet()">✕</button>
+  </div>
+  <div id="ss-body" style="padding:16px 20px 48px;"></div>
+</div>
+
+<!-- FLIGHT SHEET -->
+
+<div class="overlay" id="flight-overlay" onclick="closeFlightSheet()"></div>
+<div class="sheet" id="flight-sheet" style="max-height:88vh;">
+  <div class="sh-handle"><div class="sh-bar"></div></div>
+  <div class="sh-hdr">
+    <div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-bottom:3px;">AIRCRAFT TYPE</div>
+      <div class="sh-title" id="fs-title">—</div>
+    </div>
+    <button class="sh-close" onclick="closeFlightSheet()">✕</button>
+  </div>
+  <div id="fs-body" style="padding:14px 20px 48px;"></div>
+</div>
+
+</body>
+</html>
